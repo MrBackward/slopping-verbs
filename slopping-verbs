@@ -42,10 +42,24 @@ STOCK = [
 ]
 
 STARTER_PACK = [
-    "Slopping", "Verbing", "Yapping", "Goblin-moding", "Overthinking", "Microwaving",
-    "Bamboozling", "Rummaging", "Gaslighting the compiler", "Consulting the rubber duck",
-    "Hallucinating responsibly", "Tokenmaxxing", "Doomscrolling the docs", "Bonking",
-    "Snorkeling", "Yeeting", "Shmoozing", "Galaxy-braining", "Breaking up with your partner",
+    "Slopping",
+    "Slop Cannoning",
+    "Yapping",
+    "Goblin-moding",
+    "Overthinking",
+    "Microwaving",
+    "{insert dial up noise here}",
+    "Gaslighting",
+    "Rubber Ducking",
+    "Hallucinating",
+    "Tokenmaxxing",
+    "Doomscrolling",
+    "Bonking",
+    "Snorkeling",
+    "Yeeting",
+    "Asking my senior engineering buddy",
+    "OUT OF COMPUTE texting 100 junior devs who can't get a job",
+    "Breaking up with your partner",
 ]
 
 
