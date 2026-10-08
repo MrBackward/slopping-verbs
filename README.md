@@ -15,8 +15,7 @@ ln -s "$PWD/slopping-verbs" ~/.local/bin/slopping-verbs
 ```bash
 slopping-verbs --add Slopping "Gaslighting the compiler"
 slopping-verbs --remove Pondering Clauding
-slopping-verbs --list          # your verbs and the stock ones you removed
-slopping-verbs --all           # everything currently in rotation
+slopping-verbs --list          # every verb in rotation, yours marked +
 slopping-verbs --starter       # load a pack of funny verbs
 slopping-verbs --only-mine     # drop every stock verb
 slopping-verbs --roll          # preview a random one

@@ -109,30 +109,27 @@ def show(settings):
     verbs = effective(spinner)
     stock = {s.lower() for s in STOCK}
     have = {v.lower() for v in verbs}
-    yours = [v for v in verbs if v.lower() not in stock]
     gone = [s for s in STOCK if s.lower() not in have]
-    print(f"{len(verbs)} verbs in rotation (mode: {spinner.get('mode', 'append')})")
-    print(f"\nyours ({len(yours)}):")
-    for v in yours:
-        print(f"  + {v}")
-    print(f"\nstock you removed ({len(gone)}):")
+    for v in verbs:
+        print(f"  {v}" if v.lower() in stock else f"+ {v}")
     for v in gone:
-        print(f"  - {v}")
+        print(f"- {v} (removed)")
+    yours = sum(v.lower() not in stock for v in verbs)
+    print(f"\n{len(verbs)} in rotation, {yours} yours, {len(gone)} stock removed (mode: {spinner.get('mode', 'append')})")
 
 
 def main():
     parser = argparse.ArgumentParser(prog="slopping-verbs", description="Add and remove verbs in the Claude Code thinking spinner.")
     parser.add_argument("-a", "--add", nargs="+", default=[], metavar="VERB", help="add verbs")
     parser.add_argument("-r", "--remove", nargs="+", default=[], metavar="VERB", help="remove verbs, stock ones included")
-    parser.add_argument("-l", "--list", action="store_true", help="show your verbs and the stock ones you removed")
-    parser.add_argument("--all", action="store_true", help="print every verb currently in rotation")
+    parser.add_argument("-l", "--list", action="store_true", help="list every verb in rotation, yours marked +")
     parser.add_argument("--starter", action="store_true", help="add the starter pack of funny verbs")
     parser.add_argument("--only-mine", action="store_true", help="drop every stock verb, keep only yours")
     parser.add_argument("--roll", action="store_true", help="print a random verb from the rotation")
     parser.add_argument("--reset", action="store_true", help="back to stock Claude")
     args = parser.parse_args()
 
-    if not any([args.add, args.remove, args.list, args.all, args.starter, args.only_mine, args.roll, args.reset]):
+    if not any([args.add, args.remove, args.list, args.starter, args.only_mine, args.roll, args.reset]):
         parser.print_help()
         return
 
@@ -168,9 +165,6 @@ def main():
 
     if args.list:
         show(settings)
-    if args.all:
-        for v in effective(settings.get("spinnerVerbs") or {}):
-            print(v)
     if args.roll:
         print(f"{random.choice(effective(settings.get('spinnerVerbs') or {}))}...")
 
