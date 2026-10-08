@@ -121,7 +121,7 @@ def show(settings):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="verb", description="Add and remove verbs in the Claude Code thinking spinner.")
+    parser = argparse.ArgumentParser(prog="slopping-verbs", description="Add and remove verbs in the Claude Code thinking spinner.")
     parser.add_argument("-a", "--add", nargs="+", default=[], metavar="VERB", help="add verbs")
     parser.add_argument("-r", "--remove", nargs="+", default=[], metavar="VERB", help="remove verbs, stock ones included")
     parser.add_argument("-l", "--list", action="store_true", help="show your verbs and the stock ones you removed")
