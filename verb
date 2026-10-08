@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import os
+import random
+import sys
+from pathlib import Path
+
+SETTINGS = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude")) / "settings.json"
+
+STOCK = [
+    "Accomplishing", "Actioning", "Actualizing", "Architecting", "Baking", "Beaming", "Beboppin'",
+    "Befuddling", "Billowing", "Blanching", "Bloviating", "Boogieing", "Boondoggling", "Booping",
+    "Bootstrapping", "Brewing", "Bunning", "Burrowing", "Calculating", "Canoodling",
+    "Caramelizing", "Cascading", "Catapulting", "Cerebrating", "Channeling", "Choreographing",
+    "Churning", "Clauding", "Coalescing", "Cogitating", "Combobulating", "Composing", "Computing",
+    "Concocting", "Considering", "Contemplating", "Cooking", "Crafting", "Creating", "Crunching",
+    "Crystallizing", "Cultivating", "Deciphering", "Deliberating", "Determining", "Dilly-dallying",
+    "Discombobulating", "Doing", "Doodling", "Drizzling", "Ebbing", "Effecting", "Elucidating",
+    "Embellishing", "Enchanting", "Envisioning", "Fermenting", "Fiddle-faddling", "Finagling",
+    "Flambéing", "Flibbertigibbeting", "Flowing", "Flummoxing", "Fluttering", "Forging", "Forming",
+    "Frolicking", "Frosting", "Gallivanting", "Galloping", "Garnishing", "Generating",
+    "Gesticulating", "Germinating", "Gitifying", "Grooving", "Gusting", "Harmonizing", "Hashing",
+    "Hatching", "Herding", "Honking", "Hullaballooing", "Hyperspacing", "Ideating", "Imagining",
+    "Improvising", "Incubating", "Inferring", "Infusing", "Ionizing", "Jitterbugging",
+    "Julienning", "Kerfuffling", "Kneading", "Leavening", "Levitating", "Lollygagging",
+    "Manifesting", "Marinating", "Meandering", "Metamorphosing", "Misting", "Moonwalking",
+    "Moseying", "Mulling", "Mustering", "Musing", "Nebulizing", "Nesting", "Newspapering",
+    "Noodling", "Nucleating", "Onioning", "Orbiting", "Orchestrating", "Osmosing", "Perambulating",
+    "Percolating", "Perusing", "Philosophizing", "Photosynthesizing", "Polishing", "Pollinating",
+    "Pondering", "Pontificating", "Pouncing", "Precipitating", "Prestidigitating", "Processing",
+    "Proofing", "Propagating", "Puttering", "Puzzling", "Quantumizing", "Razzle-dazzling",
+    "Razzmatazzing", "Recombobulating", "Reticulating", "Roosting", "Ruminating", "Sautéing",
+    "Scampering", "Schlepping", "Scurrying", "Seasoning", "Shenaniganing", "Shimmying",
+    "Simmering", "Skedaddling", "Sketching", "Slithering", "Smooshing", "Sock-hopping",
+    "Spelunking", "Spinning", "Sprouting", "Stewing", "Sublimating", "Swirling", "Swooping",
+    "Symbioting", "Synthesizing", "Tempering", "Thinking", "Thundering", "Tinkering",
+    "Tomfoolering", "Topsy-turvying", "Transfiguring", "Transmogrifying", "Transmuting",
+    "Twisting", "Undulating", "Unfurling", "Unraveling", "Vibing", "Waddling", "Wandering",
+    "Warping", "Whatchamacalliting", "Whirlpooling", "Whirring", "Whisking", "Wibbling", "Working",
+    "Wrangling", "Zesting", "Zigzagging",
+]
+
+STARTER_PACK = [
+    "Slopping", "Verbing", "Yapping", "Goblin-moding", "Overthinking", "Microwaving",
+    "Bamboozling", "Rummaging", "Gaslighting the compiler", "Consulting the rubber duck",
+    "Hallucinating responsibly", "Tokenmaxxing", "Doomscrolling the docs", "Bonking",
+    "Snorkeling", "Yeeting", "Shmoozing", "Galaxy-braining", "Breaking up with your partner",
+]
+
+
+def load():
+    if not SETTINGS.exists():
+        return {}
+    try:
+        return json.loads(SETTINGS.read_text())
+    except json.JSONDecodeError as e:
+        sys.exit(f"{SETTINGS} is not valid JSON ({e}), refusing to touch it")
+
+
+def save(settings):
+    SETTINGS.parent.mkdir(parents=True, exist_ok=True)
+    tmp = SETTINGS.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n")
+    tmp.replace(SETTINGS)
+
+
+def block(settings):
+    spinner = settings.setdefault("spinnerVerbs", {})
+    spinner.setdefault("mode", "append")
+    spinner.setdefault("verbs", [])
+    return spinner
+
+
+def effective(spinner):
+    if spinner.get("mode") == "replace":
+        return list(spinner.get("verbs", []))
+    return STOCK + [v for v in spinner.get("verbs", []) if v.lower() not in {s.lower() for s in STOCK}]
+
+
+def add(settings, verbs):
+    spinner = block(settings)
+    have = {v.lower() for v in effective(spinner)}
+    for verb in (v.strip() for v in verbs):
+        if not verb:
+            continue
+        if verb.lower() in have:
+            print(f"  {verb} (already in there)")
+            continue
+        spinner["verbs"].append(verb)
+        have.add(verb.lower())
+        print(f"+ {verb}")
+
+
+def remove(settings, verbs):
+    spinner = block(settings)
+    current = effective(spinner)
+    targets = {v.strip().lower() for v in verbs}
+    if spinner["mode"] == "append" and targets & {s.lower() for s in STOCK}:
+        spinner["mode"] = "replace"
+    spinner["verbs"] = [v for v in current if v.lower() not in targets]
+    found = {v.lower() for v in current}
+    for verb in verbs:
+        print(f"- {verb.strip()}" if verb.strip().lower() in found else f"  {verb.strip()} (wasn't there)")
+
+
+def show(settings):
+    spinner = settings.get("spinnerVerbs") or {"mode": "append", "verbs": []}
+    verbs = effective(spinner)
+    stock = {s.lower() for s in STOCK}
+    have = {v.lower() for v in verbs}
+    yours = [v for v in verbs if v.lower() not in stock]
+    gone = [s for s in STOCK if s.lower() not in have]
+    print(f"{len(verbs)} verbs in rotation (mode: {spinner.get('mode', 'append')})")
+    print(f"\nyours ({len(yours)}):")
+    for v in yours:
+        print(f"  + {v}")
+    print(f"\nstock you removed ({len(gone)}):")
+    for v in gone:
+        print(f"  - {v}")
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="verb", description="Add and remove verbs in the Claude Code thinking spinner.")
+    parser.add_argument("-a", "--add", nargs="+", default=[], metavar="VERB", help="add verbs")
+    parser.add_argument("-r", "--remove", nargs="+", default=[], metavar="VERB", help="remove verbs, stock ones included")
+    parser.add_argument("-l", "--list", action="store_true", help="show your verbs and the stock ones you removed")
+    parser.add_argument("--all", action="store_true", help="print every verb currently in rotation")
+    parser.add_argument("--starter", action="store_true", help="add the starter pack of funny verbs")
+    parser.add_argument("--only-mine", action="store_true", help="drop every stock verb, keep only yours")
+    parser.add_argument("--roll", action="store_true", help="print a random verb from the rotation")
+    parser.add_argument("--reset", action="store_true", help="back to stock Claude")
+    args = parser.parse_args()
+
+    if not any([args.add, args.remove, args.list, args.all, args.starter, args.only_mine, args.roll, args.reset]):
+        parser.print_help()
+        return
+
+    settings = load()
+    changed = False
+
+    if args.reset:
+        settings.pop("spinnerVerbs", None)
+        changed = True
+        print("back to stock Claude")
+    if args.starter:
+        add(settings, STARTER_PACK)
+        changed = True
+    if args.add:
+        add(settings, args.add)
+        changed = True
+    if args.remove:
+        remove(settings, args.remove)
+        changed = True
+    if args.only_mine:
+        spinner = block(settings)
+        stock = {s.lower() for s in STOCK}
+        spinner["verbs"] = [v for v in effective(spinner) if v.lower() not in stock]
+        spinner["mode"] = "replace"
+        changed = True
+        print(f"stock verbs gone, {len(spinner['verbs'])} of yours left")
+
+    if changed:
+        spinner = settings.get("spinnerVerbs")
+        if spinner and spinner["mode"] == "replace" and not spinner["verbs"]:
+            sys.exit("that would leave the spinner with zero verbs, not saving")
+        save(settings)
+
+    if args.list:
+        show(settings)
+    if args.all:
+        for v in effective(settings.get("spinnerVerbs") or {}):
+            print(v)
+    if args.roll:
+        print(f"{random.choice(effective(settings.get('spinnerVerbs') or {}))}...")
+
+
+if __name__ == "__main__":
+    main()
